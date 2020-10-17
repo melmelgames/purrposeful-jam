@@ -10,6 +10,7 @@ public class RoamRandom : MonoBehaviour
     [SerializeField] private float maxRoamX;
     [SerializeField] private float minRoamY;
     [SerializeField] private float maxRoamY;
+    [SerializeField] private Vector2 catVelocity;
     private Rigidbody2D rb2D;
 
     [SerializeField] private Vector2 targetPos;
@@ -32,6 +33,15 @@ public class RoamRandom : MonoBehaviour
     private void FixedUpdate()
     {
         MoveCharacter(targetPos);
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.gameObject.tag == "Boundary")
+        {
+            Debug.Log("Boundary!");
+            targetPos = new Vector2(0f, 0f);
+        }
     }
 
     private void MoveCharacter(Vector2 targetPos)
