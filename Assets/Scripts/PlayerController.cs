@@ -6,8 +6,6 @@ public class PlayerController : MonoBehaviour
 {
     private Vector2 moveDir;
     [SerializeField] private float moveSpeed;
-    [SerializeField] private float xSpeed;
-    [SerializeField] private float ySpeed;
     private Rigidbody2D rb2D;
     private Animator animator;
 
