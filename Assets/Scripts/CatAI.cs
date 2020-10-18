@@ -44,16 +44,34 @@ public class CatAI : MonoBehaviour
     private int otherCatAge;                                // age of cat this cat bumps into
     [SerializeField] private int pregancyAge;
     [SerializeField] private int lastPregnancyEngAge;
+    private SpawnNewCats spawnNewCatsScript;
 
-
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        // init cat
+        // init new cat
         age = 0;
-        //foodMax = 100;
-        //foodMin = foodMax / 4;
-        //food = foodMax;
+        happiness = 100;
+        food = foodMax;
+        water = waterMax;
+        // first 2 cats have set gender, Snowball is a female cat and Meow meow is a male cat
+        if (FindObjectsOfType<CatAI>().Length > 2) 
+        {
+            int randomSex = Random.Range(0, 2);
+            switch (randomSex)
+            {
+                case 0:
+                    gender = CatGender.Male;
+                    catName = "Meow meow " + FindObjectsOfType<CatAI>().Length.ToString();
+                    break;
+                case 1:
+                    gender = CatGender.Female;
+                    catName = "Snowball " + FindObjectsOfType<CatAI>().Length.ToString();
+                    break;
+            }
+        }
+
+        // other inits
+        spawnNewCatsScript = FindObjectOfType<SpawnNewCats>();
         roamRandomScript = GetComponent<RoamRandom>();
         goToConsumableScript = GetComponent<GoToConsumable>();
         goToConsumableScript.enabled = false;
@@ -61,6 +79,12 @@ public class CatAI : MonoBehaviour
         goToConsumableScript.enabled = false;
         otherCatsNearby = false;
         isPregnant = false;
+
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
         StartCoroutine(DepleteFoodAndWater());
         StartCoroutine(Feed());
         StartCoroutine(Drink());
@@ -314,6 +338,8 @@ public class CatAI : MonoBehaviour
             if(age == pregancyAge + 9)
             {
                 //New Cats!
+                Vector2 spawnPos = gameObject.transform.position;
+                spawnNewCatsScript.SpawnCats(spawnPos);
                 Debug.Log("New CATS!");
                 lastPregnancyEngAge = age;
                 isPregnant = false;
