@@ -9,6 +9,10 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D rb2D;
     private Animator animator;
 
+    [SerializeField] private GameObject foodBowl;
+    [SerializeField] private GameObject waterBowl;
+    [SerializeField] private GameObject litterTray;
+
     private void Start()
     {
         rb2D = GetComponent<Rigidbody2D>();
@@ -36,5 +40,45 @@ public class PlayerController : MonoBehaviour
         moveDir.y = Input.GetAxisRaw("Vertical");
         animator.SetFloat("horizontal_input", moveDir.x);
         animator.SetFloat("vertical_input", moveDir.y);
+
+        // Place food bowl when I key is pressed
+        if (Input.GetKeyUp(KeyCode.I))
+        {
+            if (animator.GetCurrentAnimatorStateInfo(0).IsTag("idleFront"))
+            {
+                Vector2 position = rb2D.position + new Vector2(0, -1);
+                PlaceFoodBowl(position);
+            }
+            if (animator.GetCurrentAnimatorStateInfo(0).IsTag("idleBack"))
+            {
+                Vector2 position = rb2D.position + new Vector2(0, 1);
+                PlaceFoodBowl(position);
+            }
+            if (animator.GetCurrentAnimatorStateInfo(0).IsTag("idleRight"))
+            {
+                Vector2 position = rb2D.position + new Vector2(1, 0);
+                PlaceFoodBowl(position);
+            }
+            if (animator.GetCurrentAnimatorStateInfo(0).IsTag("idleLeft"))
+            {
+                Vector2 position = rb2D.position + new Vector2(-1, 0);
+                PlaceFoodBowl(position);
+            }
+        }
+    }
+
+    private void PlaceFoodBowl(Vector2 pos)
+    {
+        Instantiate(foodBowl, pos, Quaternion.identity);
+    }
+
+    private void PlaceWaterBowl(Vector2 pos)
+    {
+        Instantiate(waterBowl, pos, Quaternion.identity);
+    }
+
+    private void PlaceLitterTray(Vector2 pos)
+    {
+        Instantiate(litterTray, pos, Quaternion.identity);
     }
 }
