@@ -10,7 +10,6 @@ public class RoamRandom : MonoBehaviour
     [SerializeField] private float maxRoamX;
     [SerializeField] private float minRoamY;
     [SerializeField] private float maxRoamY;
-    [SerializeField] private Vector2 catVelocity;
     private Rigidbody2D rb2D;
 
     [SerializeField] private Vector2 targetPos;

@@ -4,33 +4,165 @@ using UnityEngine;
 
 public class CatAI : MonoBehaviour
 {
+    enum CatGender
+    {
+        Male, 
+        Female
+    }
 
-    [SerializeField] private string catName;
-    [SerializeField] private string gender;
-    [SerializeField] private float happiness;
-    [SerializeField] private int age;
-    [SerializeField] private float food;
-    [SerializeField] private float water;
+    [SerializeField] private string catName;                // Cat's name
+    [SerializeField] private CatGender gender;              // cat's gender
+    [SerializeField] private int happiness;                 // cat's hapiness level
+    [SerializeField] private int age;                       // cat's age
+    [SerializeField] private int food;                      // cat's food meter: food=foodMax => not Hungry; food<foodMin => hungry
+    [SerializeField] private float depleteFoodTimeStep;     // time it takes to deplete food by 1 unit
+    [SerializeField] private float feedingTimeStep;         // time it takes to increase food by 1 unit
+    [SerializeField] private int foodMax;                   // max amount of food
+    [SerializeField] private int foodMin;                   // min amount of food
+    [SerializeField] private int water;
     [SerializeField] private bool needsLitterTray;
     [SerializeField] private bool canMate;
+
+    private RoamRandom roamRandomScript;
+    private GoToConsumable goToConsumableScript;
+    private Consumable consumable;
+    private bool otherCatsNearby;                           // are there other cats nearby? check when feeding, drinking, and pooping
+    private bool nearFood;                                  // is the cat near the food bowl        // if the food bowl
+    private bool nearWater;                                  // is the cat near the water bowl      // or water bowl
+    private bool nearLitter;                                  // is the cat near the litter tray    // or litter tray are too close to eachother
+                                                              // the cat won't use either
 
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        // init cat
+        //foodMax = 100;
+        //foodMin = foodMax / 4;
+        //food = foodMax;
+        roamRandomScript = GetComponent<RoamRandom>();
+        goToConsumableScript = GetComponent<GoToConsumable>();
+        goToConsumableScript.enabled = false;
+        otherCatsNearby = false;
+        StartCoroutine(DepleteFood());
+        StartCoroutine(Feed());
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if(goToConsumableScript.enabled == true)
+        {
+            GoToFoodBowl();
+        }
     }
 
-    // FEED when FOOD = 0
-    private void Feed()
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        // if FOOD == 0 ==> if CATS near FOOD == 0 => FEED
+        if(collision.gameObject.tag == "Cat")
+        {
+            otherCatsNearby = true;
+        }
+
+        if (collision.gameObject.tag == "Food")
+        {
+            nearFood = true;
+            consumable = collision.gameObject.GetComponent<Consumable>();
+        }
+
+        if (collision.gameObject.tag == "Water")
+        {
+            nearWater = true;
+            consumable = collision.gameObject.GetComponent<Consumable>();
+        }
+
+        if (collision.gameObject.tag == "Litter")
+        {
+            nearLitter = true;
+        }
+    }
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "Cat")
+        {
+            otherCatsNearby = false;
+        }
+
+        if (collision.gameObject.tag == "Food")
+        {
+            nearFood = false;
+        }
+
+        if (collision.gameObject.tag == "Water")
+        {
+            nearWater = false;
+        }
+
+        if (collision.gameObject.tag == "Litter")
+        {
+            nearLitter = false;
+        }
+    }
+
+    // FEED when FOOD < foodMin
+    private IEnumerator Feed()
+    {
+        while (true)
+        {
+            // if food < food min => go towards food bowl
+            if (food <= foodMin)
+            {
+                roamRandomScript.enabled = false;
+                goToConsumableScript.enabled = true;
+                if (!otherCatsNearby && nearFood && !nearWater && !nearLitter)
+                {
+                    while (food < foodMax && consumable.GetConsumableAmount() > 0)
+                    {
+                        consumable.ConsumeConsumable();
+                        food++;
+                        yield return new WaitForSeconds(feedingTimeStep);
+                    }
+                }
+            }
+            // if food > foodMax => go back to randomly roaming
+            if (food >= foodMax)
+            {
+                food = foodMax;
+                goToConsumableScript.enabled = false;
+                roamRandomScript.enabled = true;
+            }
+            // if consumableAmount < 0 => go back to randomly roaming
+            if (consumable != null)
+            {
+                if (consumable.GetConsumableAmount() <= 0)
+                {
+                    goToConsumableScript.enabled = false;
+                    roamRandomScript.enabled = true;
+                }
+            }
+            yield return new WaitForSeconds(feedingTimeStep);
+        }
+            
+    }
+
+    // Cat gets hungry over time
+     private IEnumerator DepleteFood()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(depleteFoodTimeStep);
+            SpendEnergy();
+        }
+        
+
+    }
+    // Use food and water
+    private void SpendEnergy()
+    {
+        if (food > 0)
+        {
+            food--;
+        }
     }
 
     // DRINK when Water = 0
@@ -62,5 +194,11 @@ public class CatAI : MonoBehaviour
     private void Fight()
     {
         // if male => if AGE > 6 => if near other male => Prob. Fight 
+    }
+
+    // GO TO FOOD BOWL
+    private void GoToFoodBowl()
+    {
+        goToConsumableScript.GoToFood();
     }
 }
