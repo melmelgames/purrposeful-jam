@@ -45,10 +45,15 @@ public class RoamRandom : MonoBehaviour
         if (collision.gameObject.tag == "Cat")
         {
             Debug.Log("Cat!");
-            targetPos = GenerateRandomTargetPosition();
+            StartCoroutine(WaitBeforeChangingTargetPos());
         }
     }
 
+    private IEnumerator WaitBeforeChangingTargetPos()
+    {
+        yield return new WaitForSeconds(2f);
+        targetPos = GenerateRandomTargetPosition();
+    }
 
     private void MoveCharacter(Vector2 targetPos)
     {

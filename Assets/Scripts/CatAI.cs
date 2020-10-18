@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CatAI : MonoBehaviour
 {
-    enum CatGender
+    public enum CatGender
     {
         Male, 
         Female
@@ -15,12 +15,11 @@ public class CatAI : MonoBehaviour
     [SerializeField] private int happiness;                 // cat's hapiness level
     [SerializeField] private int age;                       // cat's age
     [SerializeField] private int food;                      // cat's food meter: food=foodMax => not Hungry; food<foodMin => hungry
-    [SerializeField] private float depleteFoodTimeStep;     // time it takes to deplete food by 1 unit
+    [SerializeField] private float depleteConsumableTime;     // time it takes to deplete consumable by 1 unit
     [SerializeField] private float feedingTimeStep;         // time it takes to increase food by 1 unit
     [SerializeField] private int foodMax;                   // max amount of food
     [SerializeField] private int foodMin;                   // min amount of food
     [SerializeField] private int water;                     // cat's water meter: water=waterMax => not thirsty; water<waterMin => thirsty
-    //[SerializeField] private float depleteWaterTimeStep;     // time it takes to deplete water by 1 unit
     [SerializeField] private float drinkingTimeStep;         // time it takes to increase water by 1 unit
     [SerializeField] private int waterMax;                   // max amount of water
     [SerializeField] private int waterMin;                   // min amount of water
@@ -28,6 +27,7 @@ public class CatAI : MonoBehaviour
     [SerializeField] private float timeBetweenPoops;        
     [SerializeField] private GameObject poop;               // poop GameObject for when the cats poops outside the litter tray
     [SerializeField] private bool canMate;
+    [SerializeField] private bool isPregnant;
     [SerializeField] private float ageTimeStep;             // amount of time (in sec) it takes for a cat to age 1 month
 
     private RoamRandom roamRandomScript;
@@ -39,6 +39,11 @@ public class CatAI : MonoBehaviour
     private bool nearWater;                                  // is the cat near the water bowl      // or water bowl
     private bool nearLitter;                                  // is the cat near the litter tray    // or litter tray are too close to eachother
                                                               // the cat won't use either
+
+    private CatGender otherCatGender;                       // gender of cat this cat bumps into
+    private int otherCatAge;                                // age of cat this cat bumps into
+    [SerializeField] private int pregancyAge;
+    [SerializeField] private int lastPregnancyEngAge;
 
 
     // Start is called before the first frame update
@@ -55,6 +60,7 @@ public class CatAI : MonoBehaviour
         goToLitterTrayScript = GetComponent<GoToLitterTray>();
         goToConsumableScript.enabled = false;
         otherCatsNearby = false;
+        isPregnant = false;
         StartCoroutine(DepleteFoodAndWater());
         StartCoroutine(Feed());
         StartCoroutine(Drink());
@@ -65,21 +71,30 @@ public class CatAI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Go eat and drink
         if(goToConsumableScript.enabled == true)
         {
             GoToConsumable();
         }
+        //Go poop
         if (needsLitterTray)
         {
             Poop();
         }
     }
-
+    
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if(collision.gameObject.tag == "Cat")
         {
             otherCatsNearby = true;
+            otherCatGender = collision.gameObject.GetComponent<CatAI>().GetCatGender();
+            otherCatAge = collision.gameObject.GetComponent<CatAI>().GetCatAge();
+            // mate
+            if (CanMate())
+            {
+                Mate();
+            }
         }
 
         if (collision.gameObject.tag == "Food")
@@ -168,7 +183,7 @@ public class CatAI : MonoBehaviour
     {
         while (true)
         {
-            yield return new WaitForSeconds(depleteFoodTimeStep);
+            yield return new WaitForSeconds(depleteConsumableTime);
             SpendEnergy();
         }
         
@@ -269,13 +284,58 @@ public class CatAI : MonoBehaviour
     private void Mate()
     {
         // if AGE > 4 => MATE => if sucess => if female => PREGNANCY
+        if (otherCatsNearby)
+        {
+            if((gender == CatGender.Male && otherCatGender == CatGender.Female) || (gender == CatGender.Female && otherCatGender == CatGender.Male))
+            {
+                if(age >= 4 && otherCatAge >= 4 && CanMate())
+                {
+                    //Mate
+                    if(gender == CatGender.Female && !isPregnant)
+                    {
+                        Debug.Log("Pregant!");
+                        canMate = false;
+                        isPregnant = true;
+                        pregancyAge = age;
+                        StartCoroutine(Pregnancy());
+                    }
+                }
+            }
+        }
     }
 
     // PREGNANCY
-    private void Pregnancy()
+    private IEnumerator Pregnancy()
     {
         // AFTER 9 weeks => 5 or 6 new cats
         // !canMate for 6 weeks
+        while (isPregnant)
+        {
+            if(age == pregancyAge + 9)
+            {
+                //New Cats!
+                Debug.Log("New CATS!");
+                lastPregnancyEngAge = age;
+                isPregnant = false;
+                StopCoroutine(Pregnancy());
+            }
+            Debug.Log("wait for it");
+            yield return null;
+        }
+    }
+    private bool CanMate()
+    {
+        if (gender == CatGender.Male && age >= 4)
+        {
+            canMate = true;
+            return canMate;
+        }
+        if (gender == CatGender.Female && age >= 4 && !isPregnant && age >= lastPregnancyEngAge + 6)
+        {
+            canMate = true;
+            return canMate;
+        }
+        return false;
     }
 
     // FIGHT
@@ -300,6 +360,7 @@ public class CatAI : MonoBehaviour
     {
         goToConsumableScript.GoToWater();
     }
+
     // GO TO CONSUMABLE
     private void GoToConsumable()
     {
@@ -313,6 +374,8 @@ public class CatAI : MonoBehaviour
             GoToWaterBowl();
         }
     }
+
+    // Age the cat over time
     private IEnumerator Age()
     {
         while (true)
@@ -320,5 +383,15 @@ public class CatAI : MonoBehaviour
             yield return new WaitForSeconds(ageTimeStep);
             age++;
         }
+    }
+
+    public CatGender GetCatGender()
+    {
+        return gender;
+    }
+
+    public int GetCatAge()
+    {
+        return age;
     }
 }
