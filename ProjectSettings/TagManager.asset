@@ -8,6 +8,7 @@ TagManager:
   - Boundary
   - Food
   - Water
+  - Litter
   layers:
   - Default
   - TransparentFX

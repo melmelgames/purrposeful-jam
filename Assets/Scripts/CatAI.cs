@@ -24,11 +24,14 @@ public class CatAI : MonoBehaviour
     [SerializeField] private float drinkingTimeStep;         // time it takes to increase water by 1 unit
     [SerializeField] private int waterMax;                   // max amount of water
     [SerializeField] private int waterMin;                   // min amount of water
-    [SerializeField] private bool needsLitterTray;
+    [SerializeField] private bool needsLitterTray;          // does the cat need to poop?
+    [SerializeField] private float timeBetweenPoops;
     [SerializeField] private bool canMate;
+    [SerializeField] private float ageTimeStep;             // amount of time (in sec) it takes for a cat to age 1 month
 
     private RoamRandom roamRandomScript;
     private GoToConsumable goToConsumableScript;
+    private GoToLitterTray goToLitterTrayScript;
     private Consumable consumable;
     private bool otherCatsNearby;                           // are there other cats nearby? check when feeding, drinking, and pooping
     private bool nearFood;                                  // is the cat near the food bowl        // if the food bowl
@@ -41,16 +44,21 @@ public class CatAI : MonoBehaviour
     void Start()
     {
         // init cat
+        age = 0;
         //foodMax = 100;
         //foodMin = foodMax / 4;
         //food = foodMax;
         roamRandomScript = GetComponent<RoamRandom>();
         goToConsumableScript = GetComponent<GoToConsumable>();
         goToConsumableScript.enabled = false;
+        goToLitterTrayScript = GetComponent<GoToLitterTray>();
+        goToConsumableScript.enabled = false;
         otherCatsNearby = false;
         StartCoroutine(DepleteFoodAndWater());
         StartCoroutine(Feed());
         StartCoroutine(Drink());
+        StartCoroutine(Age());
+        StartCoroutine(PeriodicBowlMovement());
     }
 
     // Update is called once per frame
@@ -59,6 +67,10 @@ public class CatAI : MonoBehaviour
         if(goToConsumableScript.enabled == true)
         {
             GoToConsumable();
+        }
+        if (needsLitterTray)
+        {
+            Poop();
         }
     }
 
@@ -213,11 +225,42 @@ public class CatAI : MonoBehaviour
             yield return new WaitForSeconds(drinkingTimeStep);
         }
     }
-
+    private IEnumerator PeriodicBowlMovement()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(timeBetweenPoops);
+            needsLitterTray = true;
+        }
+    }
     // POOP when needsLitterTray = true
     private void Poop()
     {
         // if needsLitterTray  ==> if CATS near LitterTray == 0 && LitterTray is CLEAN => POOP
+        
+        if (needsLitterTray)
+        {
+            roamRandomScript.enabled = false;
+            goToLitterTrayScript.enabled = true;
+            GoToLitter();
+            if (!otherCatsNearby && !nearFood && !nearWater && nearLitter)
+            {
+                if (goToLitterTrayScript.GetLitterTray().IsClean())
+                {
+                    goToLitterTrayScript.GetLitterTray().UseTray();
+                    needsLitterTray = false;
+                    roamRandomScript.enabled = true;
+                    goToLitterTrayScript.enabled = false;
+                }
+                else
+                {
+                    // poop outside litter box
+                    needsLitterTray = false;
+                    roamRandomScript.enabled = true;
+                    goToLitterTrayScript.enabled = false;
+                }
+            }
+        }       
     }
 
     // MATE IF OLDER THN 4 MONTHS
@@ -237,6 +280,11 @@ public class CatAI : MonoBehaviour
     private void Fight()
     {
         // if male => if AGE > 6 => if near other male => Prob. Fight 
+    }
+    // GO TO LITTER TRAY
+    private void GoToLitter()
+    {
+        goToLitterTrayScript.GoToLitter();
     }
 
     // GO TO FOOD BOWL
@@ -261,6 +309,14 @@ public class CatAI : MonoBehaviour
         if (water < waterMin)
         {
             GoToWaterBowl();
+        }
+    }
+    private IEnumerator Age()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(ageTimeStep);
+            age++;
         }
     }
 }
