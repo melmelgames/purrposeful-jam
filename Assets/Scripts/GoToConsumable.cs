@@ -41,6 +41,28 @@ public class GoToConsumable : MonoBehaviour
         
     }
 
+    public void GoToWater()
+    {
+        //consumables = FindObjectsOfType<Consumable>();
+        if (consumables != null)
+        {
+            foreach (Consumable consumable in consumables)
+            {
+                if (consumable.GetConsumableType() == Consumable.ConsumableType.Water)
+                {
+                    targetPos = consumable.transform.position;
+                    Vector2 moveDir = targetPos - rb2D.position;
+                    rb2D.MovePosition(rb2D.position + moveDir.normalized * moveSpeed * Time.fixedDeltaTime);
+                    if (ReachedTarget())
+                    {
+                        rb2D.MovePosition(rb2D.position);
+                    }
+                }
+            }
+        }
+
+    }
+
     private bool ReachedTarget()
     {
         if (Vector2.Distance(targetPos, rb2D.position) < delta)

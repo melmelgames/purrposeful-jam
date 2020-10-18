@@ -19,7 +19,11 @@ public class CatAI : MonoBehaviour
     [SerializeField] private float feedingTimeStep;         // time it takes to increase food by 1 unit
     [SerializeField] private int foodMax;                   // max amount of food
     [SerializeField] private int foodMin;                   // min amount of food
-    [SerializeField] private int water;
+    [SerializeField] private int water;                     // cat's water meter: water=waterMax => not thirsty; water<waterMin => thirsty
+    //[SerializeField] private float depleteWaterTimeStep;     // time it takes to deplete water by 1 unit
+    [SerializeField] private float drinkingTimeStep;         // time it takes to increase water by 1 unit
+    [SerializeField] private int waterMax;                   // max amount of water
+    [SerializeField] private int waterMin;                   // min amount of water
     [SerializeField] private bool needsLitterTray;
     [SerializeField] private bool canMate;
 
@@ -44,8 +48,9 @@ public class CatAI : MonoBehaviour
         goToConsumableScript = GetComponent<GoToConsumable>();
         goToConsumableScript.enabled = false;
         otherCatsNearby = false;
-        StartCoroutine(DepleteFood());
+        StartCoroutine(DepleteFoodAndWater());
         StartCoroutine(Feed());
+        StartCoroutine(Drink());
     }
 
     // Update is called once per frame
@@ -53,7 +58,7 @@ public class CatAI : MonoBehaviour
     {
         if(goToConsumableScript.enabled == true)
         {
-            GoToFoodBowl();
+            GoToConsumable();
         }
     }
 
@@ -146,7 +151,7 @@ public class CatAI : MonoBehaviour
     }
 
     // Cat gets hungry over time
-     private IEnumerator DepleteFood()
+     private IEnumerator DepleteFoodAndWater()
     {
         while (true)
         {
@@ -163,12 +168,50 @@ public class CatAI : MonoBehaviour
         {
             food--;
         }
+        if (water > 0)
+        {
+            water--;
+        }
     }
 
     // DRINK when Water = 0
-    private void Drink()
+    private IEnumerator Drink()
     {
-        // if WATER == 0 ==> if CATS near WATER == 0 => DRINK
+        while (true)
+        {
+            // if water < water min => go towards water bowl
+            if (water <= waterMin)
+            {
+                roamRandomScript.enabled = false;
+                goToConsumableScript.enabled = true;
+                if (!otherCatsNearby && !nearFood && nearWater && !nearLitter)
+                {
+                    while (water < waterMax && consumable.GetConsumableAmount() > 0)
+                    {
+                        consumable.ConsumeConsumable();
+                        water++;
+                        yield return new WaitForSeconds(drinkingTimeStep);
+                    }
+                }
+            }
+            // if water > waterMax => go back to randomly roaming
+            if (water >= waterMax)
+            {
+                water = waterMax;
+                goToConsumableScript.enabled = false;
+                roamRandomScript.enabled = true;
+            }
+            // if consumableAmount < 0 => go back to randomly roaming
+            if (consumable != null)
+            {
+                if (consumable.GetConsumableAmount() <= 0)
+                {
+                    goToConsumableScript.enabled = false;
+                    roamRandomScript.enabled = true;
+                }
+            }
+            yield return new WaitForSeconds(drinkingTimeStep);
+        }
     }
 
     // POOP when needsLitterTray = true
@@ -200,5 +243,24 @@ public class CatAI : MonoBehaviour
     private void GoToFoodBowl()
     {
         goToConsumableScript.GoToFood();
+    }
+
+    // GO TO WATER BOWL
+    private void GoToWaterBowl()
+    {
+        goToConsumableScript.GoToWater();
+    }
+    // GO TO CONSUMABLE
+    private void GoToConsumable()
+    {
+        if (food < foodMin)
+        {
+            GoToFoodBowl();
+        }
+
+        if (water < waterMin)
+        {
+            GoToWaterBowl();
+        }
     }
 }
