@@ -41,7 +41,14 @@ public class RoamRandom : MonoBehaviour
             Debug.Log("Boundary!");
             targetPos = new Vector2(0f, 0f);
         }
+
+        if (collision.gameObject.tag == "Cat")
+        {
+            Debug.Log("Cat!");
+            targetPos = GenerateRandomTargetPosition();
+        }
     }
+
 
     private void MoveCharacter(Vector2 targetPos)
     {

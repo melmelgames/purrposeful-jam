@@ -10,6 +10,7 @@ TagManager:
   - Water
   - Litter
   - Poop
+  - Cat
   layers:
   - Default
   - TransparentFX
