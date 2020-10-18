@@ -172,6 +172,7 @@ MonoBehaviour:
   waterMin: 1
   needsLitterTray: 0
   timeBetweenPoops: 5
+  poop: {fileID: 1441568703309231141, guid: d4effd5c759e3d849af25636a7e69ebd, type: 3}
   canMate: 0
   ageTimeStep: 5
 --- !u!212 &463651597

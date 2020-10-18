@@ -25,7 +25,8 @@ public class CatAI : MonoBehaviour
     [SerializeField] private int waterMax;                   // max amount of water
     [SerializeField] private int waterMin;                   // min amount of water
     [SerializeField] private bool needsLitterTray;          // does the cat need to poop?
-    [SerializeField] private float timeBetweenPoops;
+    [SerializeField] private float timeBetweenPoops;        
+    [SerializeField] private GameObject poop;               // poop GameObject for when the cats poops outside the litter tray
     [SerializeField] private bool canMate;
     [SerializeField] private float ageTimeStep;             // amount of time (in sec) it takes for a cat to age 1 month
 
@@ -255,6 +256,7 @@ public class CatAI : MonoBehaviour
                 else
                 {
                     // poop outside litter box
+                    Instantiate(poop, gameObject.transform.position, Quaternion.identity);
                     needsLitterTray = false;
                     roamRandomScript.enabled = true;
                     goToLitterTrayScript.enabled = false;
