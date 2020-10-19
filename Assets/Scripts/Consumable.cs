@@ -38,6 +38,14 @@ public class Consumable : MonoBehaviour
     {
         if(consumableAmount <= 0)
         {
+            if(consType == ConsumableType.Food)
+            {
+                PlayerController.instance.MinusOneFoodBowl();
+            }
+            if (consType == ConsumableType.Water)
+            {
+                PlayerController.instance.MinusOneWaterBowl();
+            }
             Destroy(this.gameObject);
         }
     }

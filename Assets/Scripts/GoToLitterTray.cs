@@ -25,6 +25,8 @@ public class GoToLitterTray : MonoBehaviour
         {
             foreach (LitterTray litterTray in litterTrays)
             {
+                if(litterTray != null)
+                {
                     targetPos = litterTray.transform.position;
                     Vector2 moveDir = targetPos - rb2D.position;
                     rb2D.MovePosition(rb2D.position + moveDir.normalized * moveSpeed * Time.fixedDeltaTime);
@@ -32,6 +34,8 @@ public class GoToLitterTray : MonoBehaviour
                     {
                         rb2D.MovePosition(rb2D.position);
                     }
+                }
+                    
             }
         }
 

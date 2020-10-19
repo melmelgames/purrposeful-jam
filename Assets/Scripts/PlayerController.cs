@@ -4,18 +4,37 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    public static PlayerController instance;
+
     private Vector2 moveDir;
     [SerializeField] private float moveSpeed;
     private Rigidbody2D rb2D;
     private Animator animator;
 
+    [SerializeField] private int maxNumberOfFoodBowls;
+    [SerializeField] private int currentNumberOfFoodBowls;
+
+    [SerializeField] private int maxNumberOfWaterBowls;
+    [SerializeField] private int currentNumberOfWaterBowls;
+
+    [SerializeField] private int maxNumberOfLitterTrays;
+    [SerializeField] private int currentNumberOfLitterTrays;
+
     [SerializeField] private GameObject foodBowl;
+    
     [SerializeField] private GameObject waterBowl;
+    
     [SerializeField] private GameObject litterTray;
+    
     [SerializeField] private bool isNearPoop;
     [SerializeField] private bool isNearLitterTray;
     private GameObject poopToClean;
     private LitterTray litterTrayToClean;
+
+    private void Awake()
+    {
+        instance = this;
+    }
 
     private void Start()
     {
@@ -171,17 +190,32 @@ public class PlayerController : MonoBehaviour
 
     private void PlaceFoodBowl(Vector2 pos)
     {
-        Instantiate(foodBowl, pos, Quaternion.identity);
+        if(currentNumberOfFoodBowls < maxNumberOfFoodBowls)
+        {
+            Instantiate(foodBowl, pos, Quaternion.identity);
+            currentNumberOfFoodBowls++;
+        }
+        
     }
 
     private void PlaceWaterBowl(Vector2 pos)
     {
-        Instantiate(waterBowl, pos, Quaternion.identity);
+        if(currentNumberOfWaterBowls < maxNumberOfWaterBowls)
+        {
+            Instantiate(waterBowl, pos, Quaternion.identity);
+            currentNumberOfWaterBowls++;
+        }
+        
     }
 
     private void PlaceLitterTray(Vector2 pos)
     {
-        Instantiate(litterTray, pos, Quaternion.identity);
+        if(currentNumberOfLitterTrays < maxNumberOfLitterTrays)
+        {
+            Instantiate(litterTray, pos, Quaternion.identity);
+            currentNumberOfLitterTrays++;
+        }
+        
     }
 
     private void CleanPoop()
@@ -204,8 +238,26 @@ public class PlayerController : MonoBehaviour
     {
         if (isNearLitterTray)
         {
+            currentNumberOfLitterTrays--;
             Destroy(litterTrayToClean.gameObject);
         }
         
     }
+
+    public void MinusOneFoodBowl()
+    {
+        if(currentNumberOfFoodBowls > 0)
+        {
+            currentNumberOfFoodBowls--;
+        }
+    }
+
+    public void MinusOneWaterBowl()
+    {
+        if (currentNumberOfWaterBowls > 0)
+        {
+            currentNumberOfWaterBowls--;
+        }
+    }
+
 }

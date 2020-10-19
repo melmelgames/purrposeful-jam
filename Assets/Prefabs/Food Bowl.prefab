@@ -121,5 +121,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09eb0871510683942bc3df6fd4f1e2a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  consumableAmount: 100
+  consumableAmount: 10
   consType: 0
