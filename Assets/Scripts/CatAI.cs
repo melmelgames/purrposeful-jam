@@ -53,7 +53,15 @@ public class CatAI : MonoBehaviour
     {
         // init new cat
         age = 0;
-        happiness = maxHappiness;
+        if(name == "Meow meow" || name == "Snowball")
+        {
+            happiness = 100;
+        }
+        else
+        {
+            happiness = GameManager.instance.GetCatAverageHappiness();
+        }
+        
         food = foodMax;
         water = waterMax;
         // first 2 cats have set gender, Snowball is a female cat and Meow meow is a male cat
@@ -447,5 +455,10 @@ public class CatAI : MonoBehaviour
         {
             happiness = 0;
         }
+    }
+
+    public int GetCatHappinessLevel()
+    {
+        return happiness;
     }
 }
