@@ -152,10 +152,10 @@ MonoBehaviour:
   happiness: 100
   maxHappiness: 100
   age: 0
-  food: 10
+  food: 20
   depleteConsumableTime: 3
   feedingTimeStep: 0.25
-  foodMax: 10
+  foodMax: 20
   foodMin: 1
   water: 10
   drinkingTimeStep: 0.25

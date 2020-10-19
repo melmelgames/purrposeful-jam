@@ -49,6 +49,9 @@ public class CatAI : MonoBehaviour
     [SerializeField] private int lastPregnancyEngAge;
     private SpawnNewCats spawnNewCatsScript;
 
+    [SerializeField] private bool needsWater;
+    [SerializeField] private bool needsFood;
+
     private void Awake()
     {
         // init new cat
@@ -99,6 +102,7 @@ public class CatAI : MonoBehaviour
         StartCoroutine(DepleteFoodAndWater());
         StartCoroutine(Feed());
         StartCoroutine(Drink());
+        StartCoroutine(Poop());
         StartCoroutine(Age());
         StartCoroutine(PeriodicBowlMovement());
         StartCoroutine(GetAnnoyed());
@@ -107,21 +111,19 @@ public class CatAI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // Go eat and drink
-        if(goToConsumableScript.enabled == true)
-        {
-            GoToConsumable();
-        }
-        //Go poop
-        if (needsLitterTray)
-        {
-            Poop();
-        }
-
         // Limit happiness to max happiness
         LimitHappiness();
+
+        if(food <= foodMin)
+        {
+            needsFood = true;
+        }
+        if(water <= waterMin)
+        {
+            needsWater = true;
+        }
     }
-    
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if(collision.gameObject.tag == "Cat")
@@ -182,11 +184,13 @@ public class CatAI : MonoBehaviour
         while (true)
         {
             // if food < food min => go towards food bowl
-            if (food <= foodMin)
+            if (needsFood)
             {
                 roamRandomScript.enabled = false;
+                goToLitterTrayScript.enabled = false;
                 goToConsumableScript.enabled = true;
-                if (!otherCatsNearby && nearFood && !nearWater && !nearLitter)
+                GoToFoodBowl();
+                if (nearFood)
                 {
                     while (food < foodMax && consumable.GetConsumableAmount() > 0)
                     {
@@ -201,7 +205,9 @@ public class CatAI : MonoBehaviour
             if (food >= foodMax)
             {
                 food = foodMax;
+                needsFood = false;
                 goToConsumableScript.enabled = false;
+                goToLitterTrayScript.enabled = false;
                 roamRandomScript.enabled = true;
             }
             // if consumableAmount < 0 => go back to randomly roaming
@@ -210,8 +216,16 @@ public class CatAI : MonoBehaviour
                 if (consumable.GetConsumableAmount() <= 0)
                 {
                     goToConsumableScript.enabled = false;
+                    goToLitterTrayScript.enabled = false;
                     roamRandomScript.enabled = true;
                 }
+            }
+            // if consumable is null go back to roaming randomly
+            if(consumable == null)
+            {
+                goToConsumableScript.enabled = false;
+                goToLitterTrayScript.enabled = false;
+                roamRandomScript.enabled = true;
             }
             yield return new WaitForSeconds(feedingTimeStep);
         }
@@ -248,11 +262,13 @@ public class CatAI : MonoBehaviour
         while (true)
         {
             // if water < water min => go towards water bowl
-            if (water <= waterMin)
+            if (needsWater)
             {
                 roamRandomScript.enabled = false;
+                goToLitterTrayScript.enabled = false;
                 goToConsumableScript.enabled = true;
-                if (!otherCatsNearby && !nearFood && nearWater && !nearLitter)
+                GoToWaterBowl();
+                if (nearWater)
                 {
                     while (water < waterMax && consumable.GetConsumableAmount() > 0)
                     {
@@ -267,7 +283,9 @@ public class CatAI : MonoBehaviour
             if (water >= waterMax)
             {
                 water = waterMax;
+                needsWater = false;
                 goToConsumableScript.enabled = false;
+                goToLitterTrayScript.enabled = false;
                 roamRandomScript.enabled = true;
             }
             // if consumableAmount < 0 => go back to randomly roaming
@@ -276,8 +294,16 @@ public class CatAI : MonoBehaviour
                 if (consumable.GetConsumableAmount() <= 0)
                 {
                     goToConsumableScript.enabled = false;
+                    goToLitterTrayScript.enabled = false;
                     roamRandomScript.enabled = true;
                 }
+            }
+            // if consumable is null go back to roaming randomly
+            if (consumable == null)
+            {
+                goToConsumableScript.enabled = false;
+                goToLitterTrayScript.enabled = false;
+                roamRandomScript.enabled = true;
             }
             yield return new WaitForSeconds(drinkingTimeStep);
         }
@@ -291,34 +317,40 @@ public class CatAI : MonoBehaviour
         }
     }
     // POOP when needsLitterTray = true
-    private void Poop()
+    private IEnumerator Poop()
     {
-        // if needsLitterTray  ==> if CATS near LitterTray == 0 && LitterTray is CLEAN => POOP
-        
-        if (needsLitterTray)
+        while (true)
         {
-            roamRandomScript.enabled = false;
-            goToLitterTrayScript.enabled = true;
-            GoToLitter();
-            if (!otherCatsNearby && !nearFood && !nearWater && nearLitter)
+            // if needsLitterTray  ==> if CATS near LitterTray == 0 && LitterTray is CLEAN => POOP
+
+            if (needsLitterTray)
             {
-                if (goToLitterTrayScript.GetLitterTray().IsClean())
+                roamRandomScript.enabled = false;
+                goToConsumableScript.enabled = false;
+                goToLitterTrayScript.enabled = true;
+                GoToLitter();
+                if (nearLitter)
                 {
-                    goToLitterTrayScript.GetLitterTray().UseTray();
-                    needsLitterTray = false;
-                    roamRandomScript.enabled = true;
-                    goToLitterTrayScript.enabled = false;
-                }
-                else
-                {
-                    // poop outside litter box
-                    Instantiate(poop, gameObject.transform.position, Quaternion.identity);
-                    needsLitterTray = false;
-                    roamRandomScript.enabled = true;
-                    goToLitterTrayScript.enabled = false;
+                    if (goToLitterTrayScript.GetLitterTray().IsClean())
+                    {
+                        goToLitterTrayScript.GetLitterTray().UseTray();
+                        needsLitterTray = false;
+                        roamRandomScript.enabled = true;
+                        goToLitterTrayScript.enabled = false;
+                    }
+                    else
+                    {
+                        // poop outside litter box
+                        Instantiate(poop, gameObject.transform.position, Quaternion.identity);
+                        needsLitterTray = false;
+                        roamRandomScript.enabled = true;
+                        goToLitterTrayScript.enabled = false;
+                    }
                 }
             }
-        }       
+            yield return null;
+        }
+             
     }
 
     // MATE IF OLDER THN 4 MONTHS
@@ -396,33 +428,21 @@ public class CatAI : MonoBehaviour
     // GO TO LITTER TRAY
     private void GoToLitter()
     {
-        goToLitterTrayScript.GoToLitter();
+        goToLitterTrayScript.SetGoToLitter();
     }
 
     // GO TO FOOD BOWL
     private void GoToFoodBowl()
     {
-        goToConsumableScript.GoToFood();
+        goToConsumableScript.SetGoToFood();
+        Debug.Log("GO TO FOOD 2");
     }
 
     // GO TO WATER BOWL
     private void GoToWaterBowl()
     {
-        goToConsumableScript.GoToWater();
-    }
-
-    // GO TO CONSUMABLE
-    private void GoToConsumable()
-    {
-        if (food < foodMin)
-        {
-            GoToFoodBowl();
-        }
-
-        if (water < waterMin)
-        {
-            GoToWaterBowl();
-        }
+        goToConsumableScript.SetGoToWater();
+        Debug.Log("GO TO WATER 2");
     }
 
     // Age the cat over time

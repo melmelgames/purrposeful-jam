@@ -7,83 +7,122 @@ public class GoToConsumable : MonoBehaviour
     [SerializeField] private float moveSpeed;
     private Rigidbody2D rb2D;
 
-    [SerializeField] private Vector2 targetPos;
+    [SerializeField] private Vector2 foodTargetPos;
+    [SerializeField] private Vector2 waterTargetPos;
     [SerializeField] private float delta;
+
+    [SerializeField] private bool goToFood;
+    [SerializeField] private bool goToWater;
 
     [SerializeField] private Consumable[] consumables;
 
     private void Start()
     {
         rb2D = gameObject.GetComponent<Rigidbody2D>();
-        StartCoroutine(LookForCosumables());
-
+        waterTargetPos = GetRandomWaterPosition();
+        foodTargetPos = GetRandomFoodPosition();
     }
-
-    public void GoToFood()
+    private void Update()
     {
-        //consumables = FindObjectsOfType<Consumable>();
-        if(consumables != null)
+        if (ReachedFoodTarget())
         {
-            foreach (Consumable consumable in consumables)
-            {
-                if(consumable != null)
-                {
-                    if (consumable.GetConsumableType() == Consumable.ConsumableType.Food)
-                    {
-                        targetPos = consumable.transform.position;
-                        Vector2 moveDir = targetPos - rb2D.position;
-                        rb2D.MovePosition(rb2D.position + moveDir.normalized * moveSpeed * Time.fixedDeltaTime);
-                        if (ReachedTarget())
-                        {
-                            rb2D.MovePosition(rb2D.position);
-                        }
-                    }
-                }
-            }
-        }      
-    }
-
-    public void GoToWater()
-    {
-        //consumables = FindObjectsOfType<Consumable>();
-        if (consumables != null)
-        {
-            foreach (Consumable consumable in consumables)
-            {
-                if(consumable != null)
-                {
-                    if (consumable.GetConsumableType() == Consumable.ConsumableType.Water)
-                    {
-                        targetPos = consumable.transform.position;
-                        Vector2 moveDir = targetPos - rb2D.position;
-                        rb2D.MovePosition(rb2D.position + moveDir.normalized * moveSpeed * Time.fixedDeltaTime);
-                        if (ReachedTarget())
-                        {
-                            rb2D.MovePosition(rb2D.position);
-                        }
-                    }
-                }
-                
-            }
+            foodTargetPos = GetRandomFoodPosition();
         }
-
+        if (ReachedWaterTarget())
+        {
+            waterTargetPos = GetRandomWaterPosition();
+        }
+    }
+    private void FixedUpdate()
+    {
+        if (goToFood)
+        {
+            GoToFood(foodTargetPos);
+        }
+        if (goToWater)
+        {
+            GoToWater(waterTargetPos);
+        }
     }
 
-    private bool ReachedTarget()
+    public void SetGoToFood()
     {
-        if (Vector2.Distance(targetPos, rb2D.position) < delta)
+        goToFood = true;
+    }
+    private void GoToFood(Vector2 foodTargetPos)
+    {
+        Vector2 moveDir = foodTargetPos - rb2D.position;
+                    
+        rb2D.MovePosition(rb2D.position + moveDir.normalized * moveSpeed * Time.fixedDeltaTime);
+                                       
+        if (ReachedFoodTarget())
+        {
+            rb2D.MovePosition(rb2D.position);
+            goToFood = false;
+        }
+    }
+
+    public void SetGoToWater()
+    {
+        goToWater = true;
+    }
+
+    private void GoToWater(Vector2 waterTargetPos)
+    {
+        Vector2 moveDir = waterTargetPos - rb2D.position;
+                    
+        rb2D.MovePosition(rb2D.position + moveDir.normalized * moveSpeed * Time.fixedDeltaTime);
+                    
+        if (ReachedWaterTarget())
+        {
+            rb2D.MovePosition(rb2D.position);
+            goToWater = false;
+        }
+    }
+    
+    private bool ReachedFoodTarget()
+    {
+        if (Vector2.Distance(foodTargetPos, rb2D.position) < delta)
         {
             return true;
         }
         return false;
     }
 
-    private IEnumerator LookForCosumables()
+    private bool ReachedWaterTarget()
     {
-        while (true)
+        if (Vector2.Distance(waterTargetPos, rb2D.position) < delta)
         {
-            consumables = FindObjectsOfType<Consumable>();
-            yield return new WaitForSeconds(1f);
+            return true;
         }
+        return false;
+    }
+
+    private void LookForConsumables()
+    {
+        consumables = FindObjectsOfType<Consumable>();
+        
+    }
+
+    private Vector2 GetRandomFoodPosition()
+    {
+        LookForConsumables();
+        int randomIndex = Random.Range(0, consumables.Length);
+        if (consumables[randomIndex] != null && consumables[randomIndex].GetComponent<Consumable>().GetConsumableType() == Consumable.ConsumableType.Food)
+        {
+            return consumables[randomIndex].transform.position;
+        }
+        return Vector2.zero;
+    }
+
+    private Vector2 GetRandomWaterPosition()
+    {
+        LookForConsumables();
+        int randomIndex = Random.Range(0, consumables.Length);
+        if (consumables[randomIndex] != null && consumables[randomIndex].GetComponent<Consumable>().GetConsumableType() == Consumable.ConsumableType.Water)
+        {
+            return consumables[randomIndex].transform.position;
+        }
+        return Vector2.zero;
     }
 }
