@@ -51,7 +51,7 @@ public class RoamRandom : MonoBehaviour
 
     private IEnumerator WaitBeforeChangingTargetPos()
     {
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1f);
         targetPos = GenerateRandomTargetPosition();
     }
 

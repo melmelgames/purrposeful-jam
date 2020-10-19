@@ -150,6 +150,7 @@ MonoBehaviour:
   catName: Meow meow
   gender: 0
   happiness: 0
+  maxHappiness: 100
   age: 0
   food: 10
   depleteConsumableTime: 3
@@ -164,7 +165,12 @@ MonoBehaviour:
   timeBetweenPoops: 60
   poop: {fileID: 1441568703309231141, guid: d4effd5c759e3d849af25636a7e69ebd, type: 3}
   canMate: 0
+  isPregnant: 0
   ageTimeStep: 5
+  annoyTime: 0
+  annoyAmount: 0
+  pregancyAge: 0
+  lastPregnancyEngAge: 0
 --- !u!114 &3613119845201220931
 MonoBehaviour:
   m_ObjectHideFlags: 0

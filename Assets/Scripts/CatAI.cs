@@ -13,6 +13,7 @@ public class CatAI : MonoBehaviour
     [SerializeField] private string catName;                // Cat's name
     [SerializeField] private CatGender gender;              // cat's gender
     [SerializeField] private int happiness;                 // cat's hapiness level
+    [SerializeField] private int maxHappiness;               //cat's max happiness level
     [SerializeField] private int age;                       // cat's age
     [SerializeField] private int food;                      // cat's food meter: food=foodMax => not Hungry; food<foodMin => hungry
     [SerializeField] private float depleteConsumableTime;     // time it takes to deplete consumable by 1 unit
@@ -29,6 +30,8 @@ public class CatAI : MonoBehaviour
     [SerializeField] private bool canMate;
     [SerializeField] private bool isPregnant;
     [SerializeField] private float ageTimeStep;             // amount of time (in sec) it takes for a cat to age 1 month
+    [SerializeField] private float annoyTime;               // time it takes for the cat to be able to get annoyed again
+    [SerializeField] private int annoyAmount;               // how much to take from happiness when cat gets annoyed
 
     private RoamRandom roamRandomScript;
     private GoToConsumable goToConsumableScript;
@@ -50,7 +53,7 @@ public class CatAI : MonoBehaviour
     {
         // init new cat
         age = 0;
-        happiness = 100;
+        happiness = maxHappiness;
         food = foodMax;
         water = waterMax;
         // first 2 cats have set gender, Snowball is a female cat and Meow meow is a male cat
@@ -90,6 +93,7 @@ public class CatAI : MonoBehaviour
         StartCoroutine(Drink());
         StartCoroutine(Age());
         StartCoroutine(PeriodicBowlMovement());
+        StartCoroutine(GetAnnoyed());
     }
 
     // Update is called once per frame
@@ -105,6 +109,9 @@ public class CatAI : MonoBehaviour
         {
             Poop();
         }
+
+        // Limit happiness to max happiness
+        LimitHappiness();
     }
     
     private void OnTriggerEnter2D(Collider2D collision)
@@ -177,6 +184,7 @@ public class CatAI : MonoBehaviour
                     {
                         consumable.ConsumeConsumable();
                         food++;
+                        happiness++;
                         yield return new WaitForSeconds(feedingTimeStep);
                     }
                 }
@@ -241,6 +249,7 @@ public class CatAI : MonoBehaviour
                     while (water < waterMax && consumable.GetConsumableAmount() > 0)
                     {
                         consumable.ConsumeConsumable();
+                        happiness++;
                         water++;
                         yield return new WaitForSeconds(drinkingTimeStep);
                     }
@@ -364,10 +373,17 @@ public class CatAI : MonoBehaviour
         return false;
     }
 
-    // FIGHT
-    private void Fight()
+    // GET ANNOYED IF OTHER CATS ARE NEARBY
+    private IEnumerator GetAnnoyed()
     {
-        // if male => if AGE > 6 => if near other male => Prob. Fight 
+        while (true)
+        {
+            yield return new WaitForSeconds(annoyTime);
+            if (otherCatsNearby)
+            {
+                happiness -= annoyAmount;
+            }
+        }
     }
     // GO TO LITTER TRAY
     private void GoToLitter()
@@ -419,5 +435,17 @@ public class CatAI : MonoBehaviour
     public int GetCatAge()
     {
         return age;
+    }
+
+    private void LimitHappiness()
+    {
+        if(happiness >= maxHappiness)
+        {
+            happiness = maxHappiness;
+        }
+        if(happiness <= 0)
+        {
+            happiness = 0;
+        }
     }
 }
